@@ -7,7 +7,7 @@
 <section class="card"><h2>Dashboard</h2><div class="stats"><div>Successful scans<strong id="scans">0</strong></div><div>Approved rewards<strong id="rewards">Rs. 0</strong></div></div><button id="refresh">Refresh</button></section>
 <section class="card"><h2>Add product</h2><label>Product name</label><input id="pname" placeholder="Product name"><label>Reward per bottle (PKR)</label><input id="reward" type="number" min="0" step=".01" placeholder="e.g. 20"><button id="add">Save product</button><div id="pmsg"></div></section>
 <section class="card"><h2>Generate bottle QR batch</h2><label>Product</label><select id="product"><option value="">Select product</option></select><label>Quantity (1–500)</label><input id="qty" type="number" min="1" max="500" value="10"><button id="generate">Generate unique QR codes</button><div id="gmsg"></div><div id="qrprint" class="qrgrid"></div><button id="print" class="hidden no-print">Print labels</button></section>
-<section class="card"><h2>Verify returned bottle</h2><label>Mechanic name</label><input id="mechanic" placeholder="Mechanic name"><button id="start">Start camera</button> <button id="stop">Stop camera</button><video id="video" playsinline></video><div id="smsg"></div><p class="muted">Use mobile Chrome over HTTPS and allow camera permission.</p></section>
+<section class="card no-print"><h2>Manage mechanics</h2><label>New mechanic name</label><input id="newMechanic" placeholder="Mechanic full name"><button id="addMechanic">Add mechanic</button><div id="mechanicMsg"></div><div id="mechanicList"></div></section>\n<section class="card"><h2>Verify returned bottle</h2><label>Mechanic name</label><select id="mechanic"><option value="">Select saved mechanic</option></select><button id="start">Start camera</button> <button id="stop">Stop camera</button><video id="video" playsinline></video><div id="smsg"></div><p class="muted">Use mobile Chrome over HTTPS and allow camera permission.</p></section>
 
 <section class="card no-print">
 <h2>Scan History</h2>
@@ -24,9 +24,39 @@
 const $=id=>document.getElementById(id);let secret='',stream=null,detector=null,busy=false,last='';
 function msg(id,ok,text){$(id).className='msg '+(ok?'good':'bad');$(id).textContent=text}
 async function api(path,method='GET',body){const r=await fetch(path,{method,headers:{'content-type':'application/json','x-admin-key':secret},body:body?JSON.stringify(body):undefined});const d=await r.json();if(!r.ok)throw Error(d.message||'Request failed');return d}
-async function load(){const d=await api('/api/products');$('scans').textContent=d.stats.total_scans||0;$('rewards').textContent='Rs. '+((d.stats.total_rewards||0)/100).toFixed(2);$('product').innerHTML='<option value="">Select product</option>';$('plist').innerHTML='';for(const p of d.products){let line=document.createElement('div');line.className='product';line.textContent=p.name+' — Rs. '+(p.reward_amount_paisa/100).toFixed(2)+' — '+(p.scanned_qr||0)+' / '+(p.total_qr||0)+' scanned';$('plist').append(line);if(p.active){let o=document.createElement('option');o.value=p.id;o.textContent=p.name;$('product').append(o)}}if(!d.products.length)$('plist').textContent='No products yet.'}
+async function load(){
+ const d=await api('/api/products');
+ $('scans').textContent=d.stats.total_scans||0;
+ $('rewards').textContent='Rs. '+((d.stats.total_rewards||0)/100).toFixed(2);
+ $('product').innerHTML='<option value="">Select product</option>';
+ $('plist').innerHTML='';
+ for(const p of d.products){
+  const line=document.createElement('div');line.className='product';
+  const info=document.createElement('span');info.textContent=p.name+' — Rs. '+(p.reward_amount_paisa/100).toFixed(2)+' — '+(p.scanned_qr||0)+' / '+(p.total_qr||0)+' scanned'+(p.active?'':' — INACTIVE');line.append(info);
+  const edit=document.createElement('button');edit.textContent='Edit';edit.onclick=async()=>{const name=prompt('Product name',p.name);if(name===null)return;const reward=prompt('Reward per bottle (PKR)',(p.reward_amount_paisa/100).toFixed(2));if(reward===null)return;try{await api('/api/products','PUT',{id:p.id,name,reward});await load()}catch(e){alert(e.message)}};line.append(edit);
+  const toggle=document.createElement('button');toggle.textContent=p.active?'Deactivate':'Reactivate';toggle.onclick=async()=>{if(!confirm((p.active?'Deactivate':'Reactivate')+' '+p.name+'?'))return;try{if(p.active)await api('/api/products','DELETE',{id:p.id});else await api('/api/products','PATCH',{id:p.id,active:1});await load()}catch(e){alert(e.message)}};line.append(toggle);
+  $('plist').append(line);
+  if(p.active){const o=document.createElement('option');o.value=p.id;o.textContent=p.name;$('product').append(o)}
+ }
+ if(!d.products.length)$('plist').textContent='No products yet.';
+ await loadMechanics();
+}
 $('login').onclick=async()=>{secret=$('key').value.trim();try{await load();$('app').classList.remove('hidden');$('loginMsg').textContent='Admin unlocked.';await loadHistory()}catch(e){msg('loginMsg',false,e.message)}};
 $('refresh').onclick=()=>load().catch(e=>msg('loginMsg',false,e.message));
+async function loadMechanics(){
+ const d=await api('/api/mechanics');const mechanics=d.mechanics||[];
+ $('mechanic').innerHTML='<option value="">Select saved mechanic</option>';
+ for(const m of mechanics){if(m.active){const o=document.createElement('option');o.value=m.name;o.textContent=m.name;$('mechanic').append(o)}}
+ $('mechanicList').innerHTML='';
+ for(const m of mechanics){
+  const row=document.createElement('div');row.className='product';
+  const name=document.createElement('span');name.textContent=m.name+(m.active?'':' — INACTIVE');row.append(name);
+  const edit=document.createElement('button');edit.textContent='Edit';edit.onclick=async()=>{const value=prompt('Mechanic name',m.name);if(value===null)return;try{await api('/api/mechanics','PUT',{id:m.id,name:value});await loadMechanics()}catch(e){alert(e.message)}};row.append(edit);
+  const toggle=document.createElement('button');toggle.textContent=m.active?'Delete':'Restore';toggle.onclick=async()=>{if(!confirm((m.active?'Delete':'Restore')+' mechanic '+m.name+'?'))return;try{if(m.active)await api('/api/mechanics','DELETE',{id:m.id});else await api('/api/mechanics','PATCH',{id:m.id,active:1});await loadMechanics()}catch(e){alert(e.message)}};row.append(toggle);
+  $('mechanicList').append(row);
+ }
+}
+$('addMechanic').onclick=async()=>{try{const d=await api('/api/mechanics','POST',{name:$('newMechanic').value});$('newMechanic').value='';msg('mechanicMsg',true,'Mechanic added: '+d.mechanic.name);await loadMechanics()}catch(e){msg('mechanicMsg',false,e.message)}};
 $('add').onclick=async()=>{try{const d=await api('/api/products','POST',{name:$('pname').value,reward:$('reward').value});msg('pmsg',true,'Saved '+d.product.name);$('pname').value='';$('reward').value='';await load()}catch(e){msg('pmsg',false,e.message)}};
 $('generate').onclick=async()=>{try{const d=await api('/api/generate','POST',{productId:$('product').value,quantity:$('qty').value});$('qrprint').innerHTML='';for(const token of d.tokens){const box=document.createElement('div');box.className='qritem';const im=document.createElement('img');im.src='https://api.qrserver.com/v1/create-qr-code/?size=280x280&data='+encodeURIComponent(token);const name=document.createElement('b');name.textContent=d.product;const short=document.createElement('small');short.textContent=token.slice(0,12)+'…';box.append(im,name,document.createElement('br'),short);$('qrprint').append(box)}$('print').classList.remove('hidden');msg('gmsg',true,d.quantity+' unique QR codes generated. Print and attach one to each bottle.')}catch(e){msg('gmsg',false,e.message)}};
 $('print').onclick=()=>window.print();
@@ -66,6 +96,6 @@ $('historyDeleteAll').onclick=()=>deleteHistory([],true);
 $('historyExport').onclick=()=>{const rows=[['Mechanic','Product','Reward PKR','Scanned at'],...historyRows.map(r=>[r.mechanic_name,r.product_name,(r.reward_amount_paisa/100).toFixed(2),localDateTime(r.scanned_at)])];const csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='scan-history.csv';a.click();URL.revokeObjectURL(a.href)};
 
 async function stop(){if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;$('video').srcObject=null;$('video').style.display='none'}$('stop').onclick=stop;
-async function verify(raw){if(busy)return;busy=true;try{const mechanicName=$('mechanic').value.trim();let token=raw;try{const u=new URL(raw);token=u.searchParams.get('qr')||u.searchParams.get('token')||raw}catch{}const d=await api('/api/verify','POST',{token,mechanicName});msg('smsg',true,'VALID — '+d.scan.product+' | '+d.scan.mechanic+' | Reward Rs. '+d.scan.reward);await load();await loadHistory()}catch(e){msg('smsg',false,e.message)}finally{busy=false}}
-$('start').onclick=async()=>{if(!$('mechanic').value.trim()){msg('smsg',false,'Enter mechanic name first.');return}if(!('BarcodeDetector'in window)){msg('smsg',false,'QR scanner is not supported by this browser. Use latest Chrome on Android.');return}try{detector=new BarcodeDetector({formats:['qr_code']});stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});$('video').srcObject=stream;$('video').style.display='block';await $('video').play();const loop=async()=>{if(!stream)return;if(!busy){try{const codes=await detector.detect($('video'));if(codes.length&&codes[0].rawValue&&codes[0].rawValue!==last){last=codes[0].rawValue;await verify(last);setTimeout(()=>last='',1800)}}catch{}}if(stream)requestAnimationFrame(loop)};loop()}catch(e){msg('smsg',false,'Camera failed. Allow camera access and use HTTPS.')}}
+async function verify(raw){if(busy)return;busy=true;try{const mechanicName=$('mechanic').value;let token=raw;try{const u=new URL(raw);token=u.searchParams.get('qr')||u.searchParams.get('token')||raw}catch{}const d=await api('/api/verify','POST',{token,mechanicName});msg('smsg',true,'VALID — '+d.scan.product+' | '+d.scan.mechanic+' | Reward Rs. '+d.scan.reward);await load();await loadHistory()}catch(e){msg('smsg',false,e.message)}finally{busy=false}}
+$('start').onclick=async()=>{if(!$('mechanic').value){msg('smsg',false,'Select a saved mechanic first.');return}if(!('BarcodeDetector'in window)){msg('smsg',false,'QR scanner is not supported by this browser. Use latest Chrome on Android.');return}try{detector=new BarcodeDetector({formats:['qr_code']});stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});$('video').srcObject=stream;$('video').style.display='block';await $('video').play();const loop=async()=>{if(!stream)return;if(!busy){try{const codes=await detector.detect($('video'));if(codes.length&&codes[0].rawValue&&codes[0].rawValue!==last){last=codes[0].rawValue;await verify(last);setTimeout(()=>last='',1800)}}catch{}}if(stream)requestAnimationFrame(loop)};loop()}catch(e){msg('smsg',false,'Camera failed. Allow camera access and use HTTPS.')}}
 </script></body></html>
