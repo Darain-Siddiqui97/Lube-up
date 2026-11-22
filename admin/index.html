@@ -1,65 +1,25 @@
 <!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#12345a"><title>LUBE UP — QR Admin Scanner</title>
-<style>
-*{box-sizing:border-box}body{margin:0;background:#f3f6fa;color:#172235;font-family:Arial,sans-serif}
-main{max-width:560px;margin:24px auto;padding:16px}.card{background:#fff;border:1px solid #e3e8ef;border-radius:18px;padding:20px;box-shadow:0 8px 28px #17385b12}
-h1{margin:0 0 6px;color:#12345a;font-size:24px}.muted{color:#68758a;font-size:14px;line-height:1.5}
-label{display:block;font-weight:700;font-size:13px;margin:16px 0 7px}input{width:100%;padding:13px;border:1px solid #ccd5e1;border-radius:10px;font-size:16px}
-button{border:0;border-radius:10px;padding:13px 16px;font-size:15px;font-weight:700;cursor:pointer;background:#12345a;color:white;width:100%;margin-top:12px}
-button.secondary{background:#e9eef5;color:#12345a}video{width:100%;border-radius:12px;background:#101820;margin-top:14px;display:none}
-.result{display:none;margin-top:16px;padding:16px;border-radius:12px;font-weight:700;line-height:1.5;overflow-wrap:anywhere}
-.good{background:#e8f7ed;color:#176b37}.bad{background:#fff0ef;color:#a52822}.info{background:#eef3f9;color:#23415f}
-small{color:#718096}.row{display:flex;gap:10px}.row button{flex:1}
-</style></head>
-<body><main>
-<section class="card">
-<h1>LUBE UP QR Verification</h1><p class="muted">Admin-only bottle verification. Each bottle QR can be redeemed once globally.</p>
-<label for="key">Admin key</label><input id="key" type="password" autocomplete="current-password" placeholder="Enter admin key">
-<label for="mechanic">Mechanic name</label><input id="mechanic" maxlength="80" placeholder="Enter mechanic name">
-<div class="row"><button id="start">Start camera</button><button id="stop" class="secondary">Stop</button></div>
-<video id="video" playsinline></video>
-<div id="result" class="result" role="status"></div>
-<p class="muted">Camera scanning requires HTTPS and browser permission. If the browser does not support native QR detection, use a supported modern Chrome browser.</p>
-</section></main>
-<script>
-const keyEl=document.getElementById('key'), nameEl=document.getElementById('mechanic'), video=document.getElementById('video'), result=document.getElementById('result');
-let stream=null, detector=null, busy=false, lastValue='';
-function show(type,text){result.className='result '+type;result.textContent=text;result.style.display='block'}
-function extractToken(raw){
-  try { const u=new URL(raw); const t=u.searchParams.get('qr')||u.searchParams.get('token'); if(t)return t; }
-  catch {}
-  return raw.trim();
-}
-async function stopCamera(){if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;video.srcObject=null;video.style.display='none'}
-async function verify(raw){
-  if(busy)return;busy=true;
-  const mechanicName=nameEl.value.trim(), token=extractToken(raw);
-  if(mechanicName.length<2){show('bad','Enter mechanic name before scanning.');busy=false;return}
-  try{
-    const res=await fetch('/api/verify',{method:'POST',headers:{'content-type':'application/json','x-admin-key':keyEl.value},body:JSON.stringify({token,mechanicName})});
-    const data=await res.json();
-    if(data.ok)show('good','✓ '+data.message+' Product: '+data.scan.product+' | Mechanic: '+data.scan.mechanic+' | Reward: Rs. '+data.scan.reward);
-    else show('bad',data.message||'Verification failed.');
-  }catch(e){show('bad','Network error. Please try again.')}
-  finally{busy=false}
-}
-document.getElementById('start').onclick=async()=>{
-  if(!keyEl.value){show('bad','Enter admin key first.');return}
-  if(!nameEl.value.trim()){show('bad','Enter mechanic name first.');return}
-  if(!('BarcodeDetector' in window)){show('bad','This browser does not support built-in QR scanning. Try latest Chrome on Android.');return}
-  try{
-    detector=new BarcodeDetector({formats:['qr_code']});
-    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
-    video.srcObject=stream;video.style.display='block';await video.play();
-    const scanFrame=async()=>{
-      if(!stream)return;
-      if(!busy){try{const codes=await detector.detect(video);if(codes.length&&codes[0].rawValue&&codes[0].rawValue!==lastValue){lastValue=codes[0].rawValue;await verify(lastValue);setTimeout(()=>{lastValue=''},1800)}}catch{}}
-      if(stream)requestAnimationFrame(scanFrame);
-    };scanFrame();
-  }catch(e){show('bad','Camera could not start. Allow camera permission and use HTTPS.')}
-};
-document.getElementById('stop').onclick=stopCamera;
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>LUBE UP Admin</title><style>
+*{box-sizing:border-box}body{margin:0;background:#f3f6fa;color:#172235;font-family:Arial,sans-serif}main{max-width:700px;margin:22px auto;padding:16px}.card{background:white;border:1px solid #e3e8ef;border-radius:16px;padding:20px;margin-bottom:15px}h1,h2{color:#12345a}label{display:block;font-weight:bold;margin:14px 0 6px}input,select{width:100%;padding:12px;border:1px solid #ccd5e1;border-radius:9px;font-size:16px}button{padding:12px 15px;margin-top:12px;border:0;border-radius:9px;background:#12345a;color:white;font-weight:bold;cursor:pointer}.muted{color:#68758a;font-size:14px}.msg{padding:12px;border-radius:9px;margin-top:12px}.good{background:#e8f7ed;color:#176b37}.bad{background:#fff0ef;color:#a52822}.hidden{display:none}.stats{display:flex;gap:12px}.stats div{background:#eff4f9;padding:14px;border-radius:10px;flex:1}.stats strong{display:block;font-size:23px}.product{padding:10px 0;border-bottom:1px solid #eee}.qrgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.qritem{text-align:center;border:1px solid #ddd;padding:10px;overflow-wrap:anywhere}.qritem img{width:140px;max-width:100%}video{width:100%;display:none;margin-top:12px;background:#111;border-radius:10px}@media print{.no-print{display:none!important}main{margin:0;padding:0}.card{border:0}.qrgrid{display:grid}.qritem{break-inside:avoid}} 
+</style></head><body><main>
+<section class="card no-print"><h1>LUBE UP Admin Console</h1><p class="muted">Admin-only bottle QR management. Every bottle QR is redeemable once globally.</p><label>Admin secret key</label><input id="key" type="password" placeholder="Enter ADMIN_KEY"><button id="login">Unlock admin</button><div id="loginMsg"></div></section>
+<div id="app" class="hidden">
+<section class="card"><h2>Dashboard</h2><div class="stats"><div>Successful scans<strong id="scans">0</strong></div><div>Approved rewards<strong id="rewards">Rs. 0</strong></div></div><button id="refresh">Refresh</button></section>
+<section class="card"><h2>Add product</h2><label>Product name</label><input id="pname" placeholder="Product name"><label>Reward per bottle (PKR)</label><input id="reward" type="number" min="0" step=".01" placeholder="e.g. 20"><button id="add">Save product</button><div id="pmsg"></div></section>
+<section class="card"><h2>Generate bottle QR batch</h2><label>Product</label><select id="product"><option value="">Select product</option></select><label>Quantity (1–500)</label><input id="qty" type="number" min="1" max="500" value="10"><button id="generate">Generate unique QR codes</button><div id="gmsg"></div><div id="qrprint" class="qrgrid"></div><button id="print" class="hidden no-print">Print labels</button></section>
+<section class="card"><h2>Verify returned bottle</h2><label>Mechanic name</label><input id="mechanic" placeholder="Mechanic name"><button id="start">Start camera</button> <button id="stop">Stop camera</button><video id="video" playsinline></video><div id="smsg"></div><p class="muted">Use mobile Chrome over HTTPS and allow camera permission.</p></section>
+<section class="card"><h2>Products</h2><div id="plist" class="muted">Unlock admin first.</div></section>
+</div></main><script>
+const $=id=>document.getElementById(id);let secret='',stream=null,detector=null,busy=false,last='';
+function msg(id,ok,text){$(id).className='msg '+(ok?'good':'bad');$(id).textContent=text}
+async function api(path,method='GET',body){const r=await fetch(path,{method,headers:{'content-type':'application/json','x-admin-key':secret},body:body?JSON.stringify(body):undefined});const d=await r.json();if(!r.ok)throw Error(d.message||'Request failed');return d}
+async function load(){const d=await api('/api/products');$('scans').textContent=d.stats.total_scans||0;$('rewards').textContent='Rs. '+((d.stats.total_rewards||0)/100).toFixed(2);$('product').innerHTML='<option value="">Select product</option>';$('plist').innerHTML='';for(const p of d.products){let line=document.createElement('div');line.className='product';line.textContent=p.name+' — Rs. '+(p.reward_amount_paisa/100).toFixed(2)+' — '+(p.scanned_qr||0)+' / '+(p.total_qr||0)+' scanned';$('plist').append(line);if(p.active){let o=document.createElement('option');o.value=p.id;o.textContent=p.name;$('product').append(o)}}if(!d.products.length)$('plist').textContent='No products yet.'}
+$('login').onclick=async()=>{secret=$('key').value.trim();try{await load();$('app').classList.remove('hidden');$('loginMsg').textContent='Admin unlocked.'}catch(e){msg('loginMsg',false,e.message)}};
+$('refresh').onclick=()=>load().catch(e=>msg('loginMsg',false,e.message));
+$('add').onclick=async()=>{try{const d=await api('/api/products','POST',{name:$('pname').value,reward:$('reward').value});msg('pmsg',true,'Saved '+d.product.name);$('pname').value='';$('reward').value='';await load()}catch(e){msg('pmsg',false,e.message)}};
+$('generate').onclick=async()=>{try{const d=await api('/api/generate','POST',{productId:$('product').value,quantity:$('qty').value});$('qrprint').innerHTML='';for(const token of d.tokens){const box=document.createElement('div');box.className='qritem';const im=document.createElement('img');im.src='https://api.qrserver.com/v1/create-qr-code/?size=280x280&data='+encodeURIComponent(token);const name=document.createElement('b');name.textContent=d.product;const short=document.createElement('small');short.textContent=token.slice(0,12)+'…';box.append(im,name,document.createElement('br'),short);$('qrprint').append(box)}$('print').classList.remove('hidden');msg('gmsg',true,d.quantity+' unique QR codes generated. Print and attach one to each bottle.')}catch(e){msg('gmsg',false,e.message)}};
+$('print').onclick=()=>window.print();
+async function stop(){if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;$('video').srcObject=null;$('video').style.display='none'}$('stop').onclick=stop;
+async function verify(raw){if(busy)return;busy=true;try{const mechanicName=$('mechanic').value.trim();let token=raw;try{const u=new URL(raw);token=u.searchParams.get('qr')||u.searchParams.get('token')||raw}catch{}const d=await api('/api/verify','POST',{token,mechanicName});msg('smsg',true,'VALID — '+d.scan.product+' | '+d.scan.mechanic+' | Reward Rs. '+d.scan.reward);await load()}catch(e){msg('smsg',false,e.message)}finally{busy=false}}
+$('start').onclick=async()=>{if(!$('mechanic').value.trim()){msg('smsg',false,'Enter mechanic name first.');return}if(!('BarcodeDetector'in window)){msg('smsg',false,'QR scanner is not supported by this browser. Use latest Chrome on Android.');return}try{detector=new BarcodeDetector({formats:['qr_code']});stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});$('video').srcObject=stream;$('video').style.display='block';await $('video').play();const loop=async()=>{if(!stream)return;if(!busy){try{const codes=await detector.detect($('video'));if(codes.length&&codes[0].rawValue&&codes[0].rawValue!==last){last=codes[0].rawValue;await verify(last);setTimeout(()=>last='',1800)}}catch{}}if(stream)requestAnimationFrame(loop)};loop()}catch(e){msg('smsg',false,'Camera failed. Allow camera access and use HTTPS.')}}
 </script></body></html>
