@@ -8,6 +8,17 @@
 <section class="card"><h2>Add product</h2><label>Product name</label><input id="pname" placeholder="Product name"><label>Reward per bottle (PKR)</label><input id="reward" type="number" min="0" step=".01" placeholder="e.g. 20"><button id="add">Save product</button><div id="pmsg"></div></section>
 <section class="card"><h2>Generate bottle QR batch</h2><label>Product</label><select id="product"><option value="">Select product</option></select><label>Quantity (1–500)</label><input id="qty" type="number" min="1" max="500" value="10"><button id="generate">Generate unique QR codes</button><div id="gmsg"></div><div id="qrprint" class="qrgrid"></div><button id="print" class="hidden no-print">Print labels</button></section>
 <section class="card"><h2>Verify returned bottle</h2><label>Mechanic name</label><input id="mechanic" placeholder="Mechanic name"><button id="start">Start camera</button> <button id="stop">Stop camera</button><video id="video" playsinline></video><div id="smsg"></div><p class="muted">Use mobile Chrome over HTTPS and allow camera permission.</p></section>
+
+<section class="card no-print">
+<h2>Scan History</h2>
+<p class="muted">Every successful bottle scan, with date and time. Deleting a history row never makes its QR reusable.</p>
+<label>Search mechanic</label><input id="historySearch" placeholder="Mechanic name">
+<div class="stats"><div><label>From date</label><input id="historyFrom" type="date"></div><div><label>To date</label><input id="historyTo" type="date"></div></div>
+<button id="historyLoad">Search history</button> <button id="historyExport" type="button">Export current page CSV</button>
+<div id="historyMsg" class="muted"></div>
+<div style="overflow-x:auto;margin-top:12px"><table style="width:100%;border-collapse:collapse;font-size:14px"><thead><tr><th><input id="historyAll" type="checkbox" aria-label="Select all"></th><th>Mechanic</th><th>Product</th><th>Reward</th><th>Date &amp; time</th><th>Action</th></tr></thead><tbody id="historyRows"></tbody></table></div>
+<button id="historyDeleteSelected" class="bad">Delete selected</button> <button id="historyPrev">Previous</button> <button id="historyNext">Next</button>
+</section>
 <section class="card"><h2>Products</h2><div id="plist" class="muted">Unlock admin first.</div></section>
 </div></main><script>
 const $=id=>document.getElementById(id);let secret='',stream=null,detector=null,busy=false,last='';
@@ -19,6 +30,40 @@ $('refresh').onclick=()=>load().catch(e=>msg('loginMsg',false,e.message));
 $('add').onclick=async()=>{try{const d=await api('/api/products','POST',{name:$('pname').value,reward:$('reward').value});msg('pmsg',true,'Saved '+d.product.name);$('pname').value='';$('reward').value='';await load()}catch(e){msg('pmsg',false,e.message)}};
 $('generate').onclick=async()=>{try{const d=await api('/api/generate','POST',{productId:$('product').value,quantity:$('qty').value});$('qrprint').innerHTML='';for(const token of d.tokens){const box=document.createElement('div');box.className='qritem';const im=document.createElement('img');im.src='https://api.qrserver.com/v1/create-qr-code/?size=280x280&data='+encodeURIComponent(token);const name=document.createElement('b');name.textContent=d.product;const short=document.createElement('small');short.textContent=token.slice(0,12)+'…';box.append(im,name,document.createElement('br'),short);$('qrprint').append(box)}$('print').classList.remove('hidden');msg('gmsg',true,d.quantity+' unique QR codes generated. Print and attach one to each bottle.')}catch(e){msg('gmsg',false,e.message)}};
 $('print').onclick=()=>window.print();
+
+let historyOffset=0,historyRows=[];
+function localDateTime(value){return new Date(value).toLocaleString('en-PK',{timeZone:'Asia/Karachi',dateStyle:'medium',timeStyle:'short'});}
+async function loadHistory(){
+ const params=new URLSearchParams({limit:'100',offset:String(historyOffset)});
+ if($('historySearch').value.trim())params.set('mechanic',$('historySearch').value.trim());
+ if($('historyFrom').value)params.set('from',$('historyFrom').value);
+ if($('historyTo').value)params.set('to',$('historyTo').value);
+ try{
+  const d=await api('/api/history?'+params.toString());
+  historyRows=d.rows||[];$('historyRows').innerHTML='';$('historyAll').checked=false;
+  for(const row of historyRows){
+   const tr=document.createElement('tr');tr.style.borderTop='1px solid #e5eaf0';
+   const td0=document.createElement('td');const cb=document.createElement('input');cb.type='checkbox';cb.className='history-check';cb.value=row.id;td0.append(cb);
+   const vals=[row.mechanic_name,row.product_name,'Rs. '+(row.reward_amount_paisa/100).toFixed(2),localDateTime(row.scanned_at)];
+   tr.append(td0);for(const val of vals){const td=document.createElement('td');td.style.padding='9px 5px';td.textContent=val;tr.append(td)}
+   const action=document.createElement('td');const del=document.createElement('button');del.textContent='Delete';del.onclick=()=>deleteHistory([row.id]);action.append(del);tr.append(action);$('historyRows').append(tr);
+  }
+  $('historyMsg').textContent='Showing '+(historyRows.length?historyOffset+1:0)+'–'+(historyOffset+historyRows.length)+' of '+d.total+' records.';
+  $('historyPrev').disabled=historyOffset===0;$('historyNext').disabled=historyOffset+historyRows.length>=d.total;
+ }catch(e){$('historyMsg').textContent=e.message}
+}
+async function deleteHistory(ids,all=false){
+ const promptText=all?'Delete ALL scan history records? QR codes will remain permanently scanned.':'Delete '+ids.length+' selected history record(s)? QR codes will remain permanently scanned.';
+ if(!confirm(promptText))return;
+ try{const d=await api('/api/history','DELETE',all?{all:true}:{ids});$('historyMsg').textContent=d.deleted+' history record(s) deleted. QR codes remain scanned.';await loadHistory();await load()}catch(e){$('historyMsg').textContent=e.message}
+}
+$('historyLoad').onclick=()=>{historyOffset=0;loadHistory()};
+$('historyPrev').onclick=()=>{historyOffset=Math.max(0,historyOffset-100);loadHistory()};
+$('historyNext').onclick=()=>{historyOffset+=100;loadHistory()};
+$('historyAll').onchange=e=>document.querySelectorAll('.history-check').forEach(c=>c.checked=e.target.checked);
+$('historyDeleteSelected').onclick=()=>deleteHistory(Array.from(document.querySelectorAll('.history-check:checked')).map(c=>Number(c.value)));
+$('historyExport').onclick=()=>{const rows=[['Mechanic','Product','Reward PKR','Scanned at'],...historyRows.map(r=>[r.mechanic_name,r.product_name,(r.reward_amount_paisa/100).toFixed(2),localDateTime(r.scanned_at)])];const csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='scan-history.csv';a.click();URL.revokeObjectURL(a.href)};
+
 async function stop(){if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;$('video').srcObject=null;$('video').style.display='none'}$('stop').onclick=stop;
 async function verify(raw){if(busy)return;busy=true;try{const mechanicName=$('mechanic').value.trim();let token=raw;try{const u=new URL(raw);token=u.searchParams.get('qr')||u.searchParams.get('token')||raw}catch{}const d=await api('/api/verify','POST',{token,mechanicName});msg('smsg',true,'VALID — '+d.scan.product+' | '+d.scan.mechanic+' | Reward Rs. '+d.scan.reward);await load()}catch(e){msg('smsg',false,e.message)}finally{busy=false}}
 $('start').onclick=async()=>{if(!$('mechanic').value.trim()){msg('smsg',false,'Enter mechanic name first.');return}if(!('BarcodeDetector'in window)){msg('smsg',false,'QR scanner is not supported by this browser. Use latest Chrome on Android.');return}try{detector=new BarcodeDetector({formats:['qr_code']});stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});$('video').srcObject=stream;$('video').style.display='block';await $('video').play();const loop=async()=>{if(!stream)return;if(!busy){try{const codes=await detector.detect($('video'));if(codes.length&&codes[0].rawValue&&codes[0].rawValue!==last){last=codes[0].rawValue;await verify(last);setTimeout(()=>last='',1800)}}catch{}}if(stream)requestAnimationFrame(loop)};loop()}catch(e){msg('smsg',false,'Camera failed. Allow camera access and use HTTPS.')}}
