@@ -121,9 +121,11 @@ $('logout').onclick=logout;
 (async()=>{const saved=sessionStorage.getItem('lubeup_admin_key');if(!saved)return;secret=saved;try{await showDashboard()}catch(e){secret='';sessionStorage.removeItem('lubeup_admin_key');msg('loginMsg',false,'Your saved session expired. Please log in again.')}})();
 $('refresh').onclick=()=>load().catch(e=>msg('loginMsg',false,e.message));
 async function loadMechanics(){
+ const selectedMechanic=$('mechanic').value;
  const d=await api('/api/mechanics');const mechanics=d.mechanics||[];$('mechanicCount').textContent=mechanics.filter(m=>m.active).length;
  $('mechanic').innerHTML='<option value="">Select saved mechanic</option>';
  for(const m of mechanics){if(m.active){const o=document.createElement('option');o.value=m.name;o.textContent=m.name;$('mechanic').append(o)}}
+ if(selectedMechanic&&mechanics.some(m=>m.active&&m.name===selectedMechanic))$('mechanic').value=selectedMechanic;
  $('mechanicList').innerHTML='';
  for(const m of mechanics){
   const row=document.createElement('div');row.className='product';
