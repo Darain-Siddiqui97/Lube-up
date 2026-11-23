@@ -17,6 +17,8 @@ export async function onRequest({ request, env }) {
   if (!env.DB || !env.ADMIN_KEY) return json({ ok: false, message: "Database or admin key is not configured." }, 503);
   if (!authorized(request, env)) return json({ ok: false, message: "Unauthorized." }, 401);
 
+  await env.DB.prepare("CREATE TABLE IF NOT EXISTS archived_scans (id INTEGER PRIMARY KEY, mechanic_name TEXT NOT NULL, product_name TEXT NOT NULL, reward_amount_paisa INTEGER NOT NULL, scanned_at TEXT NOT NULL)").run();
+
   if (request.method === "GET") {
     const url = new URL(request.url);
     const limit = Math.min(100, Math.max(1, Number.parseInt(url.searchParams.get("limit") || "100", 10) || 100));
@@ -29,6 +31,8 @@ export async function onRequest({ request, env }) {
 
     let where = " WHERE 1=1";
     const args = [];
+    if (mechanic) { where += " AND h.mechanic_name LIKE ?"; args.push("%" + mechanic.replace(/[\\%_]/g, "\\    let where = " WHERE 1=1";
+    const args = [];
     if (mechanic) { where += " AND s.mechanic_name LIKE ?"; args.push("%" + mechanic.replace(/[\\%_]/g, "\\$&") + "%"); }
     if (from) { where += " AND s.scanned_at >= ?"; args.push(from + "T00:00:00"); }
     if (to) { where += " AND s.scanned_at < ?"; const end = new Date(to + "T00:00:00Z"); end.setUTCDate(end.getUTCDate() + 1); where += ""; args.push(end.toISOString().slice(0, 10) + "T00:00:00"); }
@@ -37,6 +41,15 @@ export async function onRequest({ request, env }) {
     const rows = await env.DB.prepare(
       "SELECT s.id, s.mechanic_name, p.name AS product_name, s.reward_amount_paisa, s.scanned_at FROM scans s JOIN products p ON p.id = s.product_id" +
       where + " ORDER BY s.scanned_at DESC, s.id DESC LIMIT ? OFFSET ?"
+    ).bind(...args, limit, offset).all();") + "%"); }
+    if (from) { where += " AND h.scanned_at >= ?"; args.push(from + "T00:00:00"); }
+    if (to) { where += " AND h.scanned_at < ?"; const end = new Date(to + "T00:00:00Z"); end.setUTCDate(end.getUTCDate() + 1); args.push(end.toISOString().slice(0, 10) + "T00:00:00"); }
+
+    const source = "(SELECT s.id,s.mechanic_name,p.name AS product_name,s.reward_amount_paisa,s.scanned_at FROM scans s JOIN products p ON p.id=s.product_id UNION ALL SELECT a.id,a.mechanic_name,a.product_name,a.reward_amount_paisa,a.scanned_at FROM archived_scans a)";
+    const total = await env.DB.prepare("SELECT COUNT(*) AS total FROM " + source + " h" + where).bind(...args).first();
+    const rows = await env.DB.prepare(
+      "SELECT h.id,h.mechanic_name,h.product_name,h.reward_amount_paisa,h.scanned_at FROM " + source + " h" +
+      where + " ORDER BY h.scanned_at DESC,h.id DESC LIMIT ? OFFSET ?"
     ).bind(...args, limit, offset).all();
     return json({ ok: true, rows: rows.results || [], total: total.total || 0, limit, offset });
   }
@@ -45,14 +58,19 @@ export async function onRequest({ request, env }) {
     let body;
     try { body = await request.json(); } catch { return json({ ok: false, message: "Invalid JSON." }, 400); }
     if (body.all === true) {
-      const result = await env.DB.prepare("DELETE FROM scans").run();
-      return json({ ok: true, deleted: result.meta?.changes || 0, message: "History deleted. QR codes remain scanned." });
+      const results = await env.DB.batch([env.DB.prepare("DELETE FROM scans"),env.DB.prepare("DELETE FROM archived_scans")]);
+      const deleted = results.reduce((sum,r)=>sum+(r.meta?.changes||0),0);
+      return json({ ok: true, deleted, message: "History deleted. QR codes remain permanently scanned or retired." });
     }
     const ids = Array.isArray(body.ids) ? [...new Set(body.ids.map(Number).filter(n => Number.isSafeInteger(n) && n > 0))] : [];
     if (!ids.length || ids.length > 100) return json({ ok: false, message: "Select between 1 and 100 valid history records." }, 400);
     const placeholders = ids.map(() => "?").join(",");
-    const result = await env.DB.prepare("DELETE FROM scans WHERE id IN (" + placeholders + ")").bind(...ids).run();
-    return json({ ok: true, deleted: result.meta?.changes || 0, message: "History deleted. QR codes remain scanned." });
+    const results = await env.DB.batch([
+      env.DB.prepare("DELETE FROM scans WHERE id IN (" + placeholders + ")").bind(...ids),
+      env.DB.prepare("DELETE FROM archived_scans WHERE id IN (" + placeholders + ")").bind(...ids)
+    ]);
+    const deleted = results.reduce((sum,r)=>sum+(r.meta?.changes||0),0);
+    return json({ ok: true, deleted, message: "History deleted. QR codes remain permanently scanned or retired." });
   }
   return json({ ok: false, message: "Method not allowed." }, 405);
 }
