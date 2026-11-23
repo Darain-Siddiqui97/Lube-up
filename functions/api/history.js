@@ -12,7 +12,7 @@ export async function onRequest({request,env}){
   const mechanic=(url.searchParams.get("mechanic")||"").trim().slice(0,80);
   const from=url.searchParams.get("from")||"";
   const to=url.searchParams.get("to")||"";
-  if((from&&!/^\\d{4}-\\d{2}-\\d{2}$/.test(from))||(to&&!/^\\d{4}-\\d{2}-\\d{2}$/.test(to)))return json({ok:false,message:"Invalid date filter."},400);
+  if((from&&!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(from))||(to&&!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(to)))return json({ok:false,message:"Invalid date filter."},400);
   let where=" WHERE 1=1";
   const args=[];
   if(mechanic){where+=" AND h.mechanic_name LIKE ?";args.push("%"+mechanic+"%");}
