@@ -28,8 +28,8 @@ export async function onRequest({request,env}){
   catch(e){return json({ok:false,message:"This mechanic name already exists."},409)}
  }
  if(request.method==="DELETE"){
-  const m=await env.DB.prepare("UPDATE mechanics SET active=0 WHERE id=? RETURNING id,name,active").bind(id).first();
-  return m?json({ok:true,mechanic:m,message:"Mechanic deactivated; old scan history is preserved."}):json({ok:false,message:"Mechanic not found."},404);
+  const m=await env.DB.prepare("DELETE FROM mechanics WHERE id=? RETURNING id,name").bind(id).first();
+  return m?json({ok:true,mechanic:m,message:"Mechanic permanently deleted. Historical scans and payment records are preserved."}):json({ok:false,message:"Mechanic not found."},404);
  }
  if(request.method==="PATCH"){
   const active=Number(body.active);
