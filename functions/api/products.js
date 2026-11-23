@@ -5,8 +5,9 @@ export async function onRequest({request,env}){
  if(!env.DB||!env.ADMIN_KEY)return json({ok:false,message:"Database or admin key is not configured."},503);
  if(!authorized(request,env))return json({ok:false,message:"Unauthorized."},401);
  if(request.method==="GET"){
+  await env.DB.prepare("CREATE TABLE IF NOT EXISTS archived_scans (id INTEGER PRIMARY KEY, mechanic_name TEXT NOT NULL, product_name TEXT NOT NULL, reward_amount_paisa INTEGER NOT NULL, scanned_at TEXT NOT NULL)").run();
   const products=await env.DB.prepare("SELECT p.id,p.name,p.reward_amount_paisa,p.active,COUNT(q.id) AS total_qr,SUM(CASE WHEN q.status='scanned' THEN 1 ELSE 0 END) AS scanned_qr FROM products p LEFT JOIN qr_codes q ON q.product_id=p.id GROUP BY p.id ORDER BY p.id DESC").all();
-  const stats=await env.DB.prepare("SELECT COUNT(*) AS total_scans,COALESCE(SUM(reward_amount_paisa),0) AS total_rewards FROM scans").first();
+  const stats=await env.DB.prepare("SELECT COUNT(*) AS total_scans,COALESCE(SUM(reward_amount_paisa),0) AS total_rewards FROM (SELECT reward_amount_paisa FROM scans UNION ALL SELECT reward_amount_paisa FROM archived_scans)").first();
   return json({ok:true,products:products.results||[],stats});
  }
  let body={};try{body=await request.json()}catch{return json({ok:false,message:"Invalid JSON."},400)}
