@@ -5,6 +5,7 @@ export async function onRequestPost({request,env}){
  if(!env.ADMIN_KEY)return json({ok:false,message:"Admin key is not configured."},503);
  if(!safeEqual(request.headers.get("x-admin-key")||"",env.ADMIN_KEY))return json({ok:false,message:"Unauthorized."},401);
  let body;try{body=await request.json()}catch{return json({ok:false,message:"Invalid JSON."},400)}
+ await env.DB.prepare("CREATE TABLE IF NOT EXISTS retired_qr_tokens (token TEXT PRIMARY KEY, retired_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')))").run();
  const token=String(body.token||"").trim(),mechanicName=String(body.mechanicName||"").trim();
  if(!/^[A-Za-z0-9_-]{20,120}$/.test(token))return json({ok:false,message:"Invalid QR code."},400);
  if(mechanicName.length<2||mechanicName.length>80)return json({ok:false,message:"Select a saved mechanic."},400);
@@ -15,7 +16,11 @@ export async function onRequestPost({request,env}){
  const result=await env.DB.prepare("UPDATE qr_codes SET status='scanned',mechanic_name=?,scanned_at=? WHERE token=? AND status='unused' AND EXISTS(SELECT 1 FROM products WHERE products.id=qr_codes.product_id AND products.active=1) RETURNING id,product_id").bind(mechanic.name,now,token).first();
  if(!result){
   const existing=await env.DB.prepare("SELECT status FROM qr_codes WHERE token=?").bind(token).first();
-  if(!existing)return json({ok:false,status:"invalid",message:"QR code not recognized."},404);
+  if(!existing){
+   const retired=await env.DB.prepare("SELECT token FROM retired_qr_tokens WHERE token=?").bind(token).first();
+   if(retired)return json({ok:false,status:"retired",message:"This QR code has been permanently retired because its product was deleted."},410);
+   return json({ok:false,status:"invalid",message:"QR code not recognized."},404);
+  }
   if(existing.status==="scanned")return json({ok:false,status:"already_scanned",message:"ALREADY SCANNED — reward already claimed."},409);
   return json({ok:false,status:existing.status,message:"This QR code is disabled or its product is inactive."},409);
  }
