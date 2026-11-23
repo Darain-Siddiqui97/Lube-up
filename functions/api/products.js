@@ -25,8 +25,18 @@ export async function onRequest({request,env}){
   return p?json({ok:true,product:p}):json({ok:false,message:"Product not found."},404);
  }
  if(request.method==="DELETE"){
-  const p=await env.DB.prepare("UPDATE products SET active=0 WHERE id=? RETURNING id,name,active").bind(id).first();
-  return p?json({ok:true,product:p,message:"Product deactivated. Existing QR and scan records are preserved."}):json({ok:false,message:"Product not found."},404);
+  const product=await env.DB.prepare("SELECT id,name FROM products WHERE id=?").bind(id).first();
+  if(!product)return json({ok:false,message:"Product not found."},404);
+  await env.DB.prepare("CREATE TABLE IF NOT EXISTS archived_scans (id INTEGER PRIMARY KEY, mechanic_name TEXT NOT NULL, product_name TEXT NOT NULL, reward_amount_paisa INTEGER NOT NULL, scanned_at TEXT NOT NULL)").run();
+  await env.DB.prepare("CREATE TABLE IF NOT EXISTS retired_qr_tokens (token TEXT PRIMARY KEY, retired_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')))").run();
+  await env.DB.batch([
+   env.DB.prepare("INSERT OR IGNORE INTO archived_scans(id,mechanic_name,product_name,reward_amount_paisa,scanned_at) SELECT s.id,s.mechanic_name,?,s.reward_amount_paisa,s.scanned_at FROM scans s WHERE s.product_id=?").bind(product.name,id),
+   env.DB.prepare("INSERT OR IGNORE INTO retired_qr_tokens(token) SELECT token FROM qr_codes WHERE product_id=?").bind(id),
+   env.DB.prepare("DELETE FROM scans WHERE product_id=?").bind(id),
+   env.DB.prepare("DELETE FROM qr_codes WHERE product_id=?").bind(id),
+   env.DB.prepare("DELETE FROM products WHERE id=?").bind(id)
+  ]);
+  return json({ok:true,product:{id:product.id,name:product.name},message:"Product permanently deleted. Historical scans and rewards are archived; its QR codes are permanently retired."});
  }
  if(request.method==="PATCH"){
   const active=Number(body.active);
