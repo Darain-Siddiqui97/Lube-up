@@ -14,16 +14,85 @@
 @media(max-width:760px){.sidebar{position:fixed;left:0;top:0;bottom:0;height:100dvh;transform:translateX(-102%);transition:transform .22s ease;box-shadow:12px 0 35px #07152c44}.sidebar.open{transform:translateX(0)}.menu-toggle{display:inline-flex}.topbar{height:62px;padding:0 14px}.top-title{font-size:13px}.top-right{font-size:11px}.content{padding:20px 14px}.page-heading{align-items:flex-start;flex-direction:column}.page-heading h1{font-size:25px}.dashboard-grid{grid-template-columns:1fr}.card{padding:17px;border-radius:14px}.stats strong{font-size:22px}.side-overlay{position:fixed;inset:0;background:#07152c66;z-index:15;display:none}.side-overlay.show{display:block}}
 @media(max-width:420px){.stats{grid-template-columns:1fr}.top-right .online-label{display:none}.content{padding:16px 11px}.card{padding:15px}.qrgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media print{.sidebar,.topbar,.no-print,.page-heading{display:none!important}.content{padding:0}.layout{display:block}.workspace{width:100%}main{margin:0;padding:0}.card{border:0;box-shadow:none}.qrgrid{display:grid}.qritem{break-inside:avoid}}
+
+/* Colorful dashboard refresh */
+:root{--navy:#071735;--navy2:#102d62;--blue:#0866f5;--blue2:#0755d5;--ink:#101f43;--muted:#687b9d;--line:#e1e9fa;--bg:#f2f6ff;--shadow:0 5px 18px rgba(24,57,116,.08)}
+body{background:linear-gradient(135deg,#f6f8ff 0%,#edf3ff 100%);color:var(--ink)}
+.sidebar{background:linear-gradient(180deg,#071735 0%,#0b1d40 100%);box-shadow:5px 0 24px #0b1d4018}
+.brand-mark{background:linear-gradient(145deg,#ffdb48,#ff9e00);box-shadow:0 5px 14px #ffb00035}
+.nav-link{border-radius:12px;padding:13px 14px}.nav-link.active{background:linear-gradient(100deg,#0878ff,#0752e8);box-shadow:0 7px 18px #0866f54a}
+.side-note{background:linear-gradient(145deg,#0b3c89,#071d48);border-color:#ffffff20}
+.topbar{background:#ffffffed;backdrop-filter:blur(12px);border-bottom-color:#e5ecfa}
+.content{max-width:1700px;padding:27px 30px}
+.page-heading h1{font-size:31px;font-weight:800;color:#10234b}.page-heading p{font-size:15px;color:#49638f}
+.card{border-color:#e0e8f8;border-radius:16px;box-shadow:0 4px 15px rgba(29,66,130,.055)}
+.overview-card{padding:0;background:transparent;border:0;box-shadow:none;margin-bottom:20px}
+.overview-card .section-head{padding:0 2px 12px}
+.stats{grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.stats>div{position:relative;overflow:hidden;min-height:112px;border:0;border-radius:15px;padding:18px 19px;color:#fff;font-weight:650;box-shadow:0 7px 16px #17386b20}
+.stats>div:nth-child(1){background:linear-gradient(125deg,#087bff,#0646dc)}
+.stats>div:nth-child(2){background:linear-gradient(125deg,#09c58a,#008b68)}
+.stats>div:nth-child(3){background:linear-gradient(125deg,#9650ff,#4822cf)}
+.stats>div:nth-child(4){background:linear-gradient(125deg,#ffbd12,#f18a00)}
+.stats>div:after{content:"";position:absolute;width:125px;height:85px;border-radius:50%;background:#ffffff12;right:-22px;bottom:-48px;transform:rotate(-20deg)}
+.stats strong{color:#fff;font-size:29px;margin-top:9px;position:relative;z-index:1}
+.section-head h2{font-size:19px}
+.dashboard-grid{gap:16px}
+.dashboard-grid>.card{min-width:0}
+.quick-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.quick-action{min-height:105px;border:1px solid transparent;border-radius:14px;padding:16px 12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-weight:750;font-size:14px}
+.quick-action span{font-size:27px;line-height:1}
+.quick-action.blue{background:linear-gradient(145deg,#dceaff,#bcd7ff);color:#064baf;border-color:#c4dcff}
+.quick-action.green{background:linear-gradient(145deg,#dcfff0,#b8f5d8);color:#08774f;border-color:#b9f1d8}
+.quick-action.purple{background:linear-gradient(145deg,#f0e4ff,#ddc5ff);color:#5522b5;border-color:#dfcaff}
+.quick-action.orange{background:linear-gradient(145deg,#fff0d5,#ffdaa0);color:#9a4b00;border-color:#ffe0b0}
+.quick-action:hover{filter:brightness(.98);transform:translateY(-2px)}
+.info-panel{background:linear-gradient(135deg,#f5f8ff,#eaf1ff);border:1px solid #dce7fc;border-radius:14px;padding:18px}
+.info-panel strong{display:block;color:#183a76;margin-bottom:6px}
+.info-panel p{margin:0;color:#607397;font-size:13px;line-height:1.6}
+button{border-radius:10px}
+input,select{border-radius:10px}
+.product{padding:14px 2px}
+.product button{padding:8px 10px}
+.view-section .card{margin-bottom:0}
+#generator{padding:22px}
+.generator-controls{display:grid;grid-template-columns:minmax(0,1fr) 160px auto;gap:14px;align-items:end}
+.generator-controls>div label{margin-top:0}
+.generator-controls button{margin:0;min-height:43px}
+.qr-preview-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:24px;padding-top:18px;border-top:1px solid var(--line)}
+.qr-preview-heading h3{font-size:16px}
+.qrgrid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin-top:14px}
+.qritem{border:1px solid #e7ebf2;border-radius:8px;padding:9px 5px;background:#fff;color:#111;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;min-width:0;overflow:hidden}
+.qritem img{width:1in;height:1in;max-width:100%;object-fit:contain;display:block;margin:0 auto 5px}
+.qritem b{font-size:8px;line-height:1.2;font-weight:600;color:#111;text-align:center;overflow-wrap:anywhere;max-width:100%}
+.qritem small{display:none}
+#qrprint{background:#f8faff;border:1px dashed #c9d7ef;border-radius:12px;padding:12px}
+#historyDeleteSelected,#historyDeleteAll{background:#fff0f0;color:#b52c2c}
+@media(max-width:1100px){.content{padding:22px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.qrgrid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:760px){.content{padding:18px 14px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.stats>div{min-height:98px;padding:14px}.stats strong{font-size:24px}.generator-controls{grid-template-columns:1fr 110px}.generator-controls button{grid-column:1/-1}.qrgrid{grid-template-columns:repeat(3,minmax(0,1fr))}.quick-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:420px){.stats{grid-template-columns:1fr 1fr}.stats>div{font-size:12px}.stats strong{font-size:21px}.qrgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@page{size:A4 portrait;margin:0.25in}
+@media print{
+ html,body{width:100%;height:auto!important;background:#fff!important;margin:0!important;padding:0!important}
+ body *{visibility:hidden!important}
+ #qrprint,#qrprint *{visibility:visible!important}
+ #qrprint{position:absolute!important;left:0!important;top:0!important;width:100%!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;background:#fff!important;display:grid!important;grid-template-columns:repeat(6,1.25in)!important;grid-auto-rows:1.13in!important;gap:.025in!important;justify-content:center!important;align-content:start!important}
+ .qritem{width:1.25in!important;height:1.13in!important;min-width:0!important;padding:.025in!important;border:0!important;border-radius:0!important;background:#fff!important;break-inside:avoid!important;page-break-inside:avoid!important;display:flex!important;align-items:center!important;justify-content:flex-start!important;overflow:hidden!important}
+ .qritem img{width:1in!important;height:1in!important;max-width:none!important;margin:0 auto .025in!important;object-fit:contain!important}
+ .qritem b{font-size:8px!important;line-height:1!important;font-weight:600!important;color:#000!important;max-height:.11in!important;overflow:hidden!important}
+ .qritem small{display:none!important}
+}
+
 </style></head><body><div class="login-wrap">
 <section class="card no-print"><h1>LUBE UP Admin Console</h1><p class="muted">Admin-only bottle QR management. Every bottle QR is redeemable once globally.</p><label>Admin secret key</label><input id="key" type="password" placeholder="Enter ADMIN_KEY"><button id="login">Unlock admin</button><div id="loginMsg"></div></section></div>
 <div id="app" class="hidden"><div class="layout"><div class="side-overlay" id="sideOverlay"></div><aside class="sidebar" id="sidebar"><div class="brand"><div class="brand-mark">✦</div><div><div class="brand-name">LUBE <span>UP</span></div><small>QR REWARD MANAGEMENT</small></div></div><div class="nav-label">WORKSPACE</div><a class="nav-link active" href="#dashboard" data-section="dashboard"><span class="nav-ico">⌂</span>Dashboard</a><a class="nav-link" href="#verify" data-section="verify"><span class="nav-ico">▣</span>Verify QR</a><a class="nav-link" href="#history" data-section="history"><span class="nav-ico">◷</span>Scan History</a><a class="nav-link" href="#mechanics" data-section="mechanics"><span class="nav-ico">♙</span>Mechanics</a><a class="nav-link" href="#products" data-section="products"><span class="nav-ico">▦</span>Products &amp; Rewards</a><a class="nav-link" href="#generator" data-section="generator"><span class="nav-ico">▧</span>QR Generator</a><div class="side-note"><strong>Rewarding Mechanics</strong><p>Manage bottle verification and product-wise rewards from one place.</p></div></aside><div class="workspace"><header class="topbar"><div class="top-left"><button class="menu-toggle" id="menuToggle" aria-label="Open menu">☰</button><span class="top-title">Lube Up Management Portal</span></div><div class="top-right"><span class="online-dot"></span><span class="online-label">Admin workspace</span></div></header><main class="content"><div class="page-heading"><div><h1>Admin Dashboard</h1><p>Monitor scans, manage mechanics and control your QR reward system.</p></div><button id="refresh">↻ &nbsp;Refresh data</button></div>
 <section class="card overview-card" id="dashboard"><div class="section-head"><h2>Overview</h2><span class="muted">Live system summary</span></div><div class="stats"><div>Successful scans<strong id="scans">0</strong></div><div>Approved rewards<strong id="rewards">Rs. 0</strong></div><div>Active mechanics<strong id="mechanicCount">0</strong></div><div>Products<strong id="productCount">0</strong></div></div></section>
-<section class="view-section active" data-view="dashboard"><div class="card"><h2>Welcome to LUBE UP</h2><p class="muted">Your overview stays visible above. Select a feature from the sidebar to manage your system.</p></div></section>
+<section class="view-section active" data-view="dashboard"><div class="dashboard-grid"><section class="card"><div class="section-head"><h2>Quick Actions</h2><span class="muted">Common tasks</span></div><div class="quick-grid"><button class="quick-action blue" data-go="verify"><span>▣</span>Verify QR</button><button class="quick-action green" data-go="mechanics"><span>♙</span>Add Mechanic</button><button class="quick-action purple" data-go="products"><span>▦</span>Add Product</button><button class="quick-action orange" data-go="generator"><span>▧</span>Generate QR Codes</button></div></section><section class="card"><div class="section-head"><h2>System at a Glance</h2><span class="muted">LUBE UP</span></div><div class="info-panel"><strong>One bottle. One successful scan.</strong><p>Every QR code can be verified only once. Product-wise rewards are recorded automatically with each successful scan.</p></div><div style="height:12px"></div><div class="info-panel"><strong>Manage with confidence</strong><p>Product deletion preserves historical scan and reward records. Deleting scan history never makes a QR code reusable.</p></div></section></div></section>
 <section class="view-section" data-view="verify"><section class="card" id="verify"><h2>Verify Returned Bottle</h2><label>Mechanic name</label><select id="mechanic"><option value="">Select saved mechanic</option></select><button id="start">Start camera</button> <button id="stop">Stop camera</button><video id="video" playsinline></video><div id="smsg"></div><p class="muted">Use mobile Chrome over HTTPS and allow camera permission.</p></section></section>
 <section class="view-section" data-view="history"><section class="card no-print" id="history"><h2>Scan History</h2><p class="muted">Every successful bottle scan, with date and time. Deleting a history row never makes its QR reusable.</p><label>Search mechanic</label><input id="historySearch" placeholder="Mechanic name"><div class="stats"><div><label>From date</label><input id="historyFrom" type="date"></div><div><label>To date</label><input id="historyTo" type="date"></div></div><button id="historyLoad">Search history</button> <button id="historyExport" type="button">Export current page CSV</button><div id="historyMsg" class="muted"></div><div style="overflow-x:auto;margin-top:12px"><table style="width:100%;border-collapse:collapse;font-size:14px"><thead><tr><th><input id="historyAll" type="checkbox" aria-label="Select all"></th><th>Mechanic</th><th>Product</th><th>Reward</th><th>Date &amp; time</th><th>Action</th></tr></thead><tbody id="historyRows"></tbody></table></div><button id="historyDeleteSelected" class="bad">Delete selected</button> <button id="historyDeleteAll" class="bad">Clear ALL history</button> <button id="historyPrev">Previous</button> <button id="historyNext">Next</button></section></section>
 <section class="view-section" data-view="mechanics"><section class="card no-print" id="mechanics"><h2>Manage Mechanics</h2><label>New mechanic name</label><input id="newMechanic" placeholder="Mechanic full name"><button id="addMechanic">Add mechanic</button><div id="mechanicMsg"></div><div id="mechanicList"></div></section></section>
 <section class="view-section" data-view="products"><div class="dashboard-grid"><section class="card" id="products"><h2>Add Product &amp; Set Reward</h2><label>Product name</label><input id="pname" placeholder="Product name"><label>Reward per bottle (PKR)</label><input id="reward" type="number" min="0" step=".01" placeholder="e.g. 20"><button id="add">Save product</button><div id="pmsg"></div></section><section class="card" id="product-list"><h2>Product Catalogue &amp; Rewards</h2><div id="plist" class="muted">Unlock admin first.</div></section></div></section>
-<section class="view-section" data-view="generator"><section class="card" id="generator"><h2>Generate Bottle QR Batch</h2><label>Product</label><select id="product"><option value="">Select product</option></select><label>Quantity (1–500)</label><input id="qty" type="number" min="1" max="500" value="10"><button id="generate">Generate unique QR codes</button><div id="gmsg"></div><div id="qrprint" class="qrgrid"></div><button id="print" class="hidden no-print">Print labels</button></section></section></main></div></div></div><script>
+<section class="view-section" data-view="generator"><section class="card" id="generator"><div class="section-head"><div><h2>QR Code Generator</h2><p class="muted">Generate unique bottle QR codes and print them on A4 sheets.</p></div></div><div class="generator-controls"><div><label>Product</label><select id="product"><option value="">Select product</option></select></div><div><label>Quantity (1–500)</label><input id="qty" type="number" min="1" max="500" value="30"></div><button id="generate">▧ &nbsp; Generate QR Codes</button></div><div id="gmsg"></div><div class="qr-preview-heading"><h3>A4 Print Preview · 6 labels per row</h3><span class="muted">QR size 1 × 1 inch · Product name 8 px</span></div><div id="qrprint" class="qrgrid"></div><button id="print" class="hidden no-print">Print A4 QR Labels</button></section></section></main></div></div></div><script>
 const $=id=>document.getElementById(id);let secret='',stream=null,detector=null,busy=false,last='';
 function msg(id,ok,text){$(id).className='msg '+(ok?'good':'bad');$(id).textContent=text}
 async function api(path,method='GET',body){const r=await fetch(path,{method,headers:{'content-type':'application/json','x-admin-key':secret},body:body?JSON.stringify(body):undefined});const d=await r.json();if(!r.ok)throw Error(d.message||'Request failed');return d}
@@ -61,8 +130,8 @@ async function loadMechanics(){
 }
 $('addMechanic').onclick=async()=>{try{const d=await api('/api/mechanics','POST',{name:$('newMechanic').value});$('newMechanic').value='';msg('mechanicMsg',true,'Mechanic added: '+d.mechanic.name);await loadMechanics()}catch(e){msg('mechanicMsg',false,e.message)}};
 $('add').onclick=async()=>{try{const d=await api('/api/products','POST',{name:$('pname').value,reward:$('reward').value});msg('pmsg',true,'Saved '+d.product.name);$('pname').value='';$('reward').value='';await load()}catch(e){msg('pmsg',false,e.message)}};
-$('generate').onclick=async()=>{try{const d=await api('/api/generate','POST',{productId:$('product').value,quantity:$('qty').value});$('qrprint').innerHTML='';for(const token of d.tokens){const box=document.createElement('div');box.className='qritem';const im=document.createElement('img');im.src='https://api.qrserver.com/v1/create-qr-code/?size=280x280&data='+encodeURIComponent(token);const name=document.createElement('b');name.textContent=d.product;const short=document.createElement('small');short.textContent=token.slice(0,12)+'…';box.append(im,name,document.createElement('br'),short);$('qrprint').append(box)}$('print').classList.remove('hidden');msg('gmsg',true,d.quantity+' unique QR codes generated. Print and attach one to each bottle.')}catch(e){msg('gmsg',false,e.message)}};
-$('print').onclick=()=>window.print();
+$('generate').onclick=async()=>{try{const quantity=Number($('qty').value);if(!Number.isInteger(quantity)||quantity<1||quantity>500)throw Error('Quantity must be between 1 and 500.');if(!$('product').value)throw Error('Please select a product first.');const d=await api('/api/generate','POST',{productId:$('product').value,quantity});$('qrprint').innerHTML='';for(const token of d.tokens){const box=document.createElement('div');box.className='qritem';const im=document.createElement('img');im.alt='Bottle QR code';im.loading='eager';im.src='https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=0&data='+encodeURIComponent(token);const name=document.createElement('b');name.textContent=d.product;box.append(im,name);$('qrprint').append(box)}$('print').classList.remove('hidden');msg('gmsg',true,d.quantity+' unique QR codes generated. A4 sheet preview is ready.')}catch(e){msg('gmsg',false,e.message)}};
+$('print').onclick=async()=>{const images=Array.from($('qrprint').querySelectorAll('img'));await Promise.all(images.map(im=>im.complete?Promise.resolve():new Promise(resolve=>{im.onload=resolve;im.onerror=resolve;})));window.print();};
 
 let historyOffset=0,historyRows=[];
 function localDateTime(value){return new Date(value).toLocaleString('en-PK',{timeZone:'Asia/Karachi',dateStyle:'medium',timeStyle:'short'});}
@@ -105,5 +174,6 @@ $('start').onclick=async()=>{if(!$('mechanic').value){msg('smsg',false,'Select a
 const sidebar=$('sidebar'),overlay=$('sideOverlay');
 $('menuToggle').onclick=()=>{sidebar.classList.toggle('open');overlay.classList.toggle('show')};
 overlay.onclick=()=>{sidebar.classList.remove('open');overlay.classList.remove('show')};
+document.querySelectorAll('[data-go]').forEach(button=>button.addEventListener('click',()=>{const target=button.dataset.go;const link=document.querySelector('.nav-link[data-section="'+target+'"]');if(link)link.click()}));
 document.querySelectorAll('.nav-link').forEach(link=>link.addEventListener('click',e=>{e.preventDefault();const selected=link.dataset.section;document.querySelectorAll('.view-section').forEach(section=>section.classList.toggle('active',section.dataset.view===selected));document.querySelectorAll('.nav-link').forEach(a=>a.classList.toggle('active',a===link));const titles={dashboard:'Overview',verify:'Verify QR',history:'Scan History',mechanics:'Mechanics',products:'Products & Rewards',generator:'QR Generator'};document.querySelector('.top-title').textContent='LUBE UP · '+titles[selected];sidebar.classList.remove('open');overlay.classList.remove('show');window.scrollTo({top:0,behavior:'smooth'});if(selected==='history')loadHistory()}));
 </script></body></html>
