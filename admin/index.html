@@ -54,7 +54,7 @@ async function load(){
  if(!d.products.length)$('plist').textContent='No products yet.';
  await loadMechanics();
 }
-$('login').onclick=async()=>{secret=$('key').value.trim();try{await load();$('app').classList.remove('hidden');$('loginMsg').textContent='Admin unlocked.';await loadHistory()}catch(e){msg('loginMsg',false,e.message)}};
+$('login').onclick=async()=>{secret=$('key').value.trim();try{await load();$('app').classList.remove('hidden');document.querySelector('.login-wrap').classList.add('hidden');$('loginMsg').textContent='Admin unlocked.';await loadHistory()}catch(e){msg('loginMsg',false,e.message)}};
 $('refresh').onclick=()=>load().catch(e=>msg('loginMsg',false,e.message));
 async function loadMechanics(){
  const d=await api('/api/mechanics');const mechanics=d.mechanics||[];
