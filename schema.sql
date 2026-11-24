@@ -8,6 +8,13 @@ CREATE TABLE IF NOT EXISTS products (
   created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 );
 
+CREATE TABLE IF NOT EXISTS mechanics (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL COLLATE NOCASE UNIQUE,
+  active INTEGER NOT NULL DEFAULT 1 CHECK (active IN (0,1)),
+  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+);
+
 CREATE TABLE IF NOT EXISTS qr_codes (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   token TEXT NOT NULL UNIQUE,
@@ -25,6 +32,19 @@ CREATE TABLE IF NOT EXISTS scans (
   mechanic_name TEXT NOT NULL,
   reward_amount_paisa INTEGER NOT NULL,
   scanned_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS archived_scans (
+  id INTEGER PRIMARY KEY,
+  mechanic_name TEXT NOT NULL,
+  product_name TEXT NOT NULL,
+  reward_amount_paisa INTEGER NOT NULL,
+  scanned_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS retired_qr_tokens (
+  token TEXT PRIMARY KEY,
+  retired_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 );
 
 CREATE TABLE IF NOT EXISTS reward_payments (
