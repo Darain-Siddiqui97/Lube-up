@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+<defs><linearGradient id="b" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffdc45"/><stop offset="1" stop-color="#f49a00"/></linearGradient></defs>
+<rect width="64" height="64" rx="14" fill="#10264b"/>
+<path d="M25 7h14v9l5 5v32a5 5 0 0 1-5 5H25a5 5 0 0 1-5-5V21l5-5z" fill="url(#b)" stroke="#fff" stroke-width="2"/>
+<path d="M25 7h14v8H25z" fill="#f4f7ff" stroke="#fff" stroke-width="1.5"/>
+<path d="M20 25h24v19H20z" fill="#fff" rx="2"/>
+<path d="M23 29h18v3H23z" fill="#10264b"/>
+<text x="32" y="39" font-family="Arial,sans-serif" font-size="7" font-weight="900" text-anchor="middle" fill="#10264b">LUBE UP</text>
+<path d="M26 47h12" stroke="#10264b" stroke-width="2" stroke-linecap="round"/>
+</svg>
